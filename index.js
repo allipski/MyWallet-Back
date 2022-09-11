@@ -3,7 +3,7 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 import cors from "cors";
 import signUp from "./controllers/usersController.js";
-import login from "./controllers/sessionsController.js";
+import { login, logout } from "./controllers/sessionsController.js";
 import { postTransactions, getTransactions, deleteTransactions, updateTransactions } from "./controllers/transactionsController.js";
 
 dotenv.config();
@@ -20,6 +20,7 @@ mongoClient.connect(() => {
 
 app.post("/cadastro", signUp);
 app.post("/login", login);
+app.delete("/login/:id", verificaToken, logout);
 app.get("/transactions", verificaToken, getTransactions);
 app.post("/transactions", verificaToken, postTransactions);
 app.delete("/transactions/:id", verificaToken, deleteTransactions);

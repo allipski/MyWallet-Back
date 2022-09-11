@@ -1,7 +1,9 @@
 import { ObjectId } from "mongodb";
+import joi from "joi";
 
 export async function getTransactions(req, res) {
   const user = res.locals.user;
+
   try {
     const transactions = await db
       .collection(`transactions_${user.userid}`)
@@ -16,12 +18,28 @@ export async function getTransactions(req, res) {
 
 export async function postTransactions(req, res) {
   const user = res.locals.user;
+  const { date: date, value: value, description: description, type: type } = req.body
+
+  const createSchema = joi.object({
+    value: joi.number().required(),
+    description: joi.string().required(),
+  });
+
+  const validation = createSchema.validate(
+    { value: value, description: description },
+    { abortEarly: true }
+  );
+
+  if (validation.error) {
+    return res.sendStatus(422);
+  }
+
   try {
     await db.collection(`transactions_${user.userid}`).insertOne({
-      date: req.body.date,
-      value: req.body.value,
-      description: req.body.description,
-      type: req.body.type
+      date: date,
+      value: value,
+      description: description,
+      type: type
     });
     return res.sendStatus(201);
   } catch (error) {
@@ -48,7 +66,22 @@ export async function updateTransactions(req, res) {
   const user = res.locals.user;
   const { id } = req.params;
   const toUpdate = { _id: new ObjectId(id) }
-  console.log(user, toUpdate);
+  
+  const { value: value, description: description } = req.body
+
+  const updateSchema = joi.object({
+    value: joi.number().required(),
+    description: joi.string().required(),
+  });
+
+  const validation = updateSchema.validate(
+    { value: value, description: description },
+    { abortEarly: true }
+  );
+
+  if (validation.error) {
+    return res.sendStatus(422);
+  }
 
   try {
     const transaction = await db.collection(`transactions_${user.userid}`).findOne({ _id: new ObjectId(id) })
