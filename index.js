@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import signUp from "./controllers/usersController.js";
 import login from "./controllers/sessionsController.js";
+import { postTransactions, getTransactions, deleteTransactions } from "./controllers/transactionsController.js";
 
 dotenv.config();
 
@@ -18,9 +19,41 @@ mongoClient.connect(() => {
 });
 
 app.post("/cadastro", signUp);
-
 app.post("/login", login);
+app.get("/transactions", verificaToken, getTransactions);
+app.post("/transactions", verificaToken, postTransactions);
+app.delete("/transactions/:id", verificaToken, deleteTransactions);
 
 app.listen(5000, () => {
   console.log("Server is listening on port 5000.");
 });
+
+async function verificaToken(req, res, next) {
+  const authorization = req.headers.authorization;
+
+  const token = authorization?.replace("Bearer ", "");
+
+	if (!token) {
+    console.log(1);
+    return res.sendStatus(401);
+	}
+
+  const session = await db.collection("sessions").findOne({ token });
+  if (!session) {
+    console.log(2);
+    return res.sendStatus(401);
+  }
+
+	const user = await db.collection("users").findOne({ 
+		_id: session.userid 
+	});
+	if (!user) {
+    console.log(3);
+	  return res.sendStatus(401);
+	}
+
+	res.locals.user = session;
+  res.locals.transaction = req.body;
+
+  next();
+}
