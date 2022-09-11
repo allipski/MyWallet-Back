@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import signUp from "./controllers/usersController.js";
 import login from "./controllers/sessionsController.js";
-import { postTransactions, getTransactions, deleteTransactions } from "./controllers/transactionsController.js";
+import { postTransactions, getTransactions, deleteTransactions, updateTransactions } from "./controllers/transactionsController.js";
 
 dotenv.config();
 
@@ -23,6 +23,7 @@ app.post("/login", login);
 app.get("/transactions", verificaToken, getTransactions);
 app.post("/transactions", verificaToken, postTransactions);
 app.delete("/transactions/:id", verificaToken, deleteTransactions);
+app.put("/transactions/:id", verificaToken, updateTransactions);
 
 app.listen(5000, () => {
   console.log("Server is listening on port 5000.");
@@ -34,13 +35,11 @@ async function verificaToken(req, res, next) {
   const token = authorization?.replace("Bearer ", "");
 
 	if (!token) {
-    console.log(1);
     return res.sendStatus(401);
 	}
 
   const session = await db.collection("sessions").findOne({ token });
   if (!session) {
-    console.log(2);
     return res.sendStatus(401);
   }
 
@@ -48,7 +47,6 @@ async function verificaToken(req, res, next) {
 		_id: session.userid 
 	});
 	if (!user) {
-    console.log(3);
 	  return res.sendStatus(401);
 	}
 
